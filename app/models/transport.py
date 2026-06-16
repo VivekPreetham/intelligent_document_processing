@@ -36,6 +36,10 @@ class SeawayBillResponse(BaseModel):
     reference_ids: List[str] = Field(default_factory=list)
     confidence: Dict[str, float] = Field(default_factory=dict)
     extraction_method: str
+    requires_review: bool = Field(default=False)
+    review_reasons: List[str] = Field(default_factory=list)
+    processing_time_ms: Dict[str, float] = Field(default_factory=dict)
+    total_time_ms: float = Field(default=0.0)
     errors: List[ExtractionError] = Field(default_factory=list)
 
 
@@ -56,4 +60,8 @@ class AirwayBillResponse(BaseModel):
     reference_ids: List[str] = Field(default_factory=list)
     confidence: Dict[str, float] = Field(default_factory=dict)
     extraction_method: str
+    requires_review: bool = Field(default=False)
+    review_reasons: List[str] = Field(default_factory=list)
+    processing_time_ms: Dict[str, float] = Field(default_factory=dict)
+    total_time_ms: float = Field(default=0.0)
     errors: List[ExtractionError] = Field(default_factory=list)

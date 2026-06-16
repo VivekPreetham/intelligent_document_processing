@@ -5,6 +5,7 @@ import os
 import re
 
 from app.pipeline.state import DocumentType, IDPState
+from app.pipeline.timing import node_timer
 
 logger = logging.getLogger(__name__)
 
@@ -145,10 +146,10 @@ def classify_node(state: IDPState) -> IDPState:
         logger.error("No parsed text available for classification")
         return {**state, "document_type": "unknown"}
 
-    doc_type = _rule_based_classify(text)
-
-    if doc_type is None:
-        logger.info("Rule-based classification inconclusive — calling LLM")
-        doc_type = _llm_classify(text)
+    with node_timer(state, "classify"):
+        doc_type = _rule_based_classify(text)
+        if doc_type is None:
+            logger.info("Rule-based classification inconclusive — calling LLM")
+            doc_type = _llm_classify(text)
 
     return {**state, "document_type": doc_type}

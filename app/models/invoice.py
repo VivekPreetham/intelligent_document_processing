@@ -47,6 +47,22 @@ class InvoiceResponse(BaseModel):
     extraction_method: str = Field(
         description="Which pipeline branch produced this result, e.g. 'docling+rule_based'"
     )
+    requires_review: bool = Field(
+        default=False,
+        description="True when one or more key fields have low confidence and need human verification.",
+    )
+    review_reasons: List[str] = Field(
+        default_factory=list,
+        description="Explains why this document was flagged for human review.",
+    )
+    processing_time_ms: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Time taken by each pipeline node in milliseconds.",
+    )
+    total_time_ms: float = Field(
+        default=0.0,
+        description="Total end-to-end processing time in milliseconds.",
+    )
     errors: List[ExtractionError] = Field(
         default_factory=list,
         description="Field-level extraction failures. Never null — may be empty.",
