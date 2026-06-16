@@ -391,27 +391,11 @@ def _llm_extract_invoice(text: str, missing_fields: List[str]) -> Dict[str, Any]
 # ── Main extraction node ──────────────────────────────────────────────────────
 
 def extract_invoice_node(state: IDPState) -> IDPState:
-    """
-    LangGraph node — Invoice Extraction.
 
-    Strategy per field:
-      1. Run rule-based extractor → assign confidence score.
-      2. Collect all fields with confidence < LLM_CALL_THRESHOLD.
-      3. One batched LLM call for all missing fields (not one call per field).
-      4. Merge LLM results into extracted_fields with reduced confidence (0.85).
-      5. Log extraction_method per field.
-
-    Reads:   docling_output, llamaparse_output
-    Writes:  extracted_fields, confidence_scores, extraction_method_log
-    """
     docling_text: str | None = state.get("docling_output")
     llamaparse_text: str | None = state.get("llamaparse_output")
 
-    # For field extraction, try docling first; use LlamaParse as a fallback
-    # source if a field isn't found in docling output.
-    # Merge both parser outputs so every extractor searches across the full
-    # combined text. If docling misses something (e.g. a field in a complex
-    # table) LlamaParse may have caught it, and vice versa.
+
     import time as _time
     _t0 = _time.perf_counter()
 
@@ -435,8 +419,6 @@ def extract_invoice_node(state: IDPState) -> IDPState:
     confidence["date"] = conf
 
     # ── Due date — only extract if a specific due/payment date label exists ──
-    # We don't use standalone date patterns here to avoid matching the invoice
-    # date again when no due date is present in the document.
     due_date_val, conf = _extract_date_labelled(full_text, r"(?:due\s*date|payment\s*due|pay\s*by)")
     extracted["due_date"] = due_date_val
     confidence["due_date"] = conf
@@ -494,7 +476,11 @@ def extract_invoice_node(state: IDPState) -> IDPState:
         logger.info("Calling LLM for missing fields: %s", missing_fields)
         llm_results = _llm_extract_invoice(full_text, missing_fields)
 
+        # Sanitise LLM output: treat string "null"/"none"/"n/a" as None
+        _null_strings = {"null", "none", "n/a", "na", "undefined", ""}
         for field, value in llm_results.items():
+            if isinstance(value, str) and value.lower().strip() in _null_strings:
+                value = None
             if value is not None and (extracted.get(field) is None):
                 extracted[field] = value
                 confidence[field] = 0.85  # LLM result — high but not certain

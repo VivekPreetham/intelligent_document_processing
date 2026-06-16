@@ -1,0 +1,415 @@
+{
+  "results": [
+    {
+      "file": "invoice_Aaron Bergman_36259.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-03-06",
+          "expected": "2012-03-06"
+        },
+        "total": {
+          "predicted": "58.11",
+          "expected": "58.11"
+        },
+        "invoice_number": {
+          "predicted": "36259",
+          "expected": "36259"
+        },
+        "reference_ids": {
+          "predicted": "36259",
+          "expected": "36259"
+        }
+      }
+    },
+    {
+      "file": "invoice_Aaron Hawkins_4820.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-12-08",
+          "expected": "2012-12-08"
+        },
+        "total": {
+          "predicted": "2724.57",
+          "expected": "2724.57"
+        },
+        "invoice_number": {
+          "predicted": "4820",
+          "expected": "4820"
+        },
+        "reference_ids": {
+          "predicted": "4820",
+          "expected": "4820"
+        }
+      }
+    },
+    {
+      "file": "invoice_Aaron Smayling_15978.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-03-31",
+          "expected": "2012-03-31"
+        },
+        "total": {
+          "predicted": "1910.35",
+          "expected": "1910.35"
+        },
+        "invoice_number": {
+          "predicted": "15978",
+          "expected": "15978"
+        },
+        "reference_ids": {
+          "predicted": "15978",
+          "expected": "15978"
+        }
+      }
+    },
+    {
+      "file": "invoice_Adam Hart_16384.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-12-08",
+          "expected": "2012-12-08"
+        },
+        "total": {
+          "predicted": "6208.84",
+          "expected": "6208.84"
+        },
+        "invoice_number": {
+          "predicted": "16384",
+          "expected": "16384"
+        },
+        "reference_ids": {
+          "predicted": "16384",
+          "expected": "16384"
+        }
+      }
+    },
+    {
+      "file": "invoice_Adam Shillingsburg_12471.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [
+        {
+          "field_name": "due_date",
+          "reason": "Could not parse 'null' to a valid date",
+          "raw_value": "null"
+        }
+      ],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-05-20",
+          "expected": "2012-05-20"
+        },
+        "total": {
+          "predicted": "1620.65",
+          "expected": "1620.65"
+        },
+        "invoice_number": {
+          "predicted": "12471",
+          "expected": "12471"
+        },
+        "reference_ids": {
+          "predicted": "12471",
+          "expected": "12471"
+        }
+      }
+    },
+    {
+      "file": "invoice_Adrian Barton_25445.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [
+        {
+          "field_name": "due_date",
+          "reason": "Could not parse 'null' to a valid date",
+          "raw_value": "null"
+        }
+      ],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-12-27",
+          "expected": "2012-12-27"
+        },
+        "total": {
+          "predicted": "3583.72",
+          "expected": "3583.72"
+        },
+        "invoice_number": {
+          "predicted": "25445",
+          "expected": "25445"
+        },
+        "reference_ids": {
+          "predicted": "25445",
+          "expected": "25445"
+        }
+      }
+    },
+    {
+      "file": "invoice_Aimee Bixby_39793.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-03-04",
+          "expected": "2012-03-04"
+        },
+        "total": {
+          "predicted": "186.58",
+          "expected": "186.58"
+        },
+        "invoice_number": {
+          "predicted": "39793",
+          "expected": "39793"
+        },
+        "reference_ids": {
+          "predicted": "39793",
+          "expected": "39793"
+        }
+      }
+    },
+    {
+      "file": "invoice_Alan Barnes_36600.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-11-15",
+          "expected": "2012-11-15"
+        },
+        "total": {
+          "predicted": "56.61",
+          "expected": "56.61"
+        },
+        "invoice_number": {
+          "predicted": "36600",
+          "expected": "36600"
+        },
+        "reference_ids": {
+          "predicted": "36600",
+          "expected": "36600"
+        }
+      }
+    },
+    {
+      "file": "invoice_Alan Dominguez_31421.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-12-25",
+          "expected": "2012-12-25"
+        },
+        "total": {
+          "predicted": "1319.71",
+          "expected": "1319.71"
+        },
+        "invoice_number": {
+          "predicted": "31421",
+          "expected": "31421"
+        },
+        "reference_ids": {
+          "predicted": "31421",
+          "expected": "31421"
+        }
+      }
+    },
+    {
+      "file": "invoice_Alan Haines_29721.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [
+        {
+          "field_name": "due_date",
+          "reason": "Could not parse 'null' to a valid date",
+          "raw_value": "null"
+        }
+      ],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-11-24",
+          "expected": "2012-11-24"
+        },
+        "total": {
+          "predicted": "9162.23",
+          "expected": "9162.23"
+        },
+        "invoice_number": {
+          "predicted": "29721",
+          "expected": "29721"
+        },
+        "reference_ids": {
+          "predicted": "29721",
+          "expected": "29721"
+        }
+      }
+    },
+    {
+      "file": "invoice_Alan Hwang_35712.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-11-28",
+          "expected": "2012-11-28"
+        },
+        "total": {
+          "predicted": "939.35",
+          "expected": "939.35"
+        },
+        "invoice_number": {
+          "predicted": "35712",
+          "expected": "35712"
+        },
+        "reference_ids": {
+          "predicted": "35712",
+          "expected": "35712"
+        }
+      }
+    },
+    {
+      "file": "invoice_Alejandro Grove_38707.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2012-07-22",
+          "expected": "2012-07-22"
+        },
+        "total": {
+          "predicted": "222.89",
+          "expected": "222.89"
+        },
+        "invoice_number": {
+          "predicted": "38707",
+          "expected": "38707"
+        },
+        "reference_ids": {
+          "predicted": "38707",
+          "expected": "38707"
+        }
+      }
+    },
+    {
+      "file": "invoice_Allen Armold_32104.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2013-02-02",
+          "expected": "2013-02-02"
+        },
+        "total": {
+          "predicted": "71.74",
+          "expected": "71.74"
+        },
+        "invoice_number": {
+          "predicted": "32104",
+          "expected": "32104"
+        },
+        "reference_ids": {
+          "predicted": "32104",
+          "expected": "32104"
+        }
+      }
+    },
+    {
+      "file": "invoice_Amy Hunt_36351.pdf",
+      "document_type": "invoice",
+      "extraction_method": "docling+llamaparse+rule_based+llm_fallback",
+      "errors": [],
+      "fields": {
+        "issuer": {
+          "predicted": "superstore",
+          "expected": "superstore"
+        },
+        "date": {
+          "predicted": "2013-01-02",
+          "expected": "2013-01-02"
+        },
+        "total": {
+          "predicted": "18.78",
+          "expected": "18.78"
+        },
+        "invoice_number": {
+          "predicted": "36351",
+          "expected": "36351"
+        },
+        "reference_ids": {
+          "predicted": "36351",
+          "expected": "36351"
+        }
+      }
+    }
+  ],
+  "failures": []
+}

@@ -130,11 +130,6 @@ def classify_node(state: IDPState) -> IDPState:
     Reads:   docling_output, llamaparse_output
     Writes:  document_type
 
-    Strategy:
-    1. Prefer docling output for classification (layout-aware, faster).
-    2. Fall back to llamaparse output if docling is None.
-    3. Run rule-based keyword scoring first — no LLM cost for clear cases.
-    4. Only call the Groq LLM if keyword rules return no match.
     """
     docling_text: str | None = state.get("docling_output")
     llamaparse_text: str | None = state.get("llamaparse_output")

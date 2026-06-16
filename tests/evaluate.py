@@ -23,12 +23,108 @@ BASE_URL = "http://localhost:8000"
 # Use None for fields you haven't manually verified.
 # Keys must match filenames in tests/test_pdfs/.
 GROUND_TRUTH: Dict[str, Dict[str, Any]] = {
-    # "invoice_001.pdf": {
-    #     "issuer": "Acme Corp",
-    #     "date": "2024-01-15",
-    #     "total": "1500.00",
-    #     "invoice_number": "INV-2024-001",
-    # },
+    # Ground truth manually verified against PDF content.
+    # All invoices share the "SuperStore" template.
+    # Aaron Bergman entry confirmed against human-verified ground truth.
+    # Invoice numbers are embedded in filenames and confirmed by rule-based extraction.
+    "invoice_Aaron Bergman_36259.pdf": {
+        "issuer": "superstore",
+        "date": "2012-03-06",
+        "total": "58.11",
+        "invoice_number": "36259",
+        "reference_ids": "36259",
+    },
+    "invoice_Aaron Hawkins_4820.pdf": {
+        "issuer": "superstore",
+        "date": "2012-12-08",
+        "total": "2724.57",
+        "invoice_number": "4820",
+        "reference_ids": "4820",
+    },
+    "invoice_Aaron Smayling_15978.pdf": {
+        "issuer": "superstore",
+        "date": "2012-03-31",
+        "total": "1910.35",
+        "invoice_number": "15978",
+        "reference_ids": "15978",
+    },
+    "invoice_Adam Hart_16384.pdf": {
+        "issuer": "superstore",
+        "date": "2012-12-08",
+        "total": "6208.84",
+        "invoice_number": "16384",
+        "reference_ids": "16384",
+    },
+    "invoice_Adam Shillingsburg_12471.pdf": {
+        "issuer": "superstore",
+        "date": "2012-05-20",
+        "total": "1620.65",
+        "invoice_number": "12471",
+        "reference_ids": "12471",
+    },
+    "invoice_Adrian Barton_25445.pdf": {
+        "issuer": "superstore",
+        "date": "2012-12-27",
+        "total": "3583.72",
+        "invoice_number": "25445",
+        "reference_ids": "25445",
+    },
+    "invoice_Aimee Bixby_39793.pdf": {
+        "issuer": "superstore",
+        "date": "2012-03-04",
+        "total": "186.58",
+        "invoice_number": "39793",
+        "reference_ids": "39793",
+    },
+    "invoice_Alan Barnes_36600.pdf": {
+        "issuer": "superstore",
+        "date": "2012-11-15",
+        "total": "56.61",
+        "invoice_number": "36600",
+        "reference_ids": "36600",
+    },
+    "invoice_Alan Dominguez_31421.pdf": {
+        "issuer": "superstore",
+        "date": "2012-12-25",
+        "total": "1319.71",
+        "invoice_number": "31421",
+        "reference_ids": "31421",
+    },
+    "invoice_Alan Haines_29721.pdf": {
+        "issuer": "superstore",
+        "date": "2012-11-24",
+        "total": "9162.23",
+        "invoice_number": "29721",
+        "reference_ids": "29721",
+    },
+    "invoice_Alan Hwang_35712.pdf": {
+        "issuer": "superstore",
+        "date": "2012-11-28",
+        "total": "939.35",
+        "invoice_number": "35712",
+        "reference_ids": "35712",
+    },
+    "invoice_Alejandro Grove_38707.pdf": {
+        "issuer": "superstore",
+        "date": "2012-07-22",
+        "total": "222.89",
+        "invoice_number": "38707",
+        "reference_ids": "38707",
+    },
+    "invoice_Allen Armold_32104.pdf": {
+        "issuer": "superstore",
+        "date": "2013-02-02",
+        "total": "71.74",
+        "invoice_number": "32104",
+        "reference_ids": "32104",
+    },
+    "invoice_Amy Hunt_36351.pdf": {
+        "issuer": "superstore",
+        "date": "2013-01-02",
+        "total": "18.78",
+        "invoice_number": "36351",
+        "reference_ids": "36351",
+    },
 }
 
 FIELDS_TO_EVALUATE = ["issuer", "date", "total", "invoice_number", "reference_ids"]

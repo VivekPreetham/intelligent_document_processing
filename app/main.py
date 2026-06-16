@@ -7,8 +7,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-# Load .env before anything else so GROQ_API_KEY and LLAMA_CLOUD_API_KEY
-# are available when the pipeline nodes import them via os.getenv().
 load_dotenv()
 
 from app.api.routes import router
