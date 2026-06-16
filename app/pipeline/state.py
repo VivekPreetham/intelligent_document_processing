@@ -57,3 +57,8 @@ class IDPState(TypedDict, total=False):
     # which routes the graph to the error exit node instead of extraction.
     is_fatal_error: Optional[bool]
     fatal_error_message: Optional[str]
+
+    # ── Timing ───────────────────────────────────────────────────────────────
+    # Each node writes its elapsed time (ms) here so the final response
+    # can expose per-node and total processing times for observability.
+    node_timings: Optional[Dict[str, float]]

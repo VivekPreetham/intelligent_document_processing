@@ -7,6 +7,7 @@ from pathlib import Path
 
 from app.models.errors import ExtractionError
 from app.pipeline.state import IDPState
+from app.pipeline.timing import node_timer
 
 logger = logging.getLogger(__name__)
 
@@ -88,8 +89,9 @@ def parse_node(state: IDPState) -> IDPState:
         tmp_path = tmp.name
 
     try:
-        docling_output = _parse_with_docling(tmp_path)
-        llamaparse_output = _parse_with_llamaparse(tmp_path)
+        with node_timer(state, "parse"):
+            docling_output = _parse_with_docling(tmp_path)
+            llamaparse_output = _parse_with_llamaparse(tmp_path)
     finally:
         # Always clean up the temp file.
         Path(tmp_path).unlink(missing_ok=True)

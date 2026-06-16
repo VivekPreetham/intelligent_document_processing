@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from dateutil import parser as dateutil_parser
 
 from app.pipeline.state import IDPState
+from app.pipeline.timing import node_timer
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +210,109 @@ def _extract_subtax(text: str) -> Tuple[Optional[str], Optional[str], float]:
     return subtotal, tax, confidence
 
 
+# ── Line item extraction ──────────────────────────────────────────────────────
+
+def _extract_line_items_rule(text: str) -> List[Dict[str, Any]]:
+    """
+    Extract line items from invoice text using pattern matching.
+    Looks for rows that contain: description + quantity + unit price + amount.
+    Handles both markdown table format (from docling) and plain text rows.
+    """
+    items: List[Dict[str, Any]] = []
+
+    # Strategy 1: Markdown table rows (docling produces these)
+    # Format: | Description | Qty | Unit Price | Amount |
+    table_row = re.compile(
+        r"\|\s*(.+?)\s*\|\s*([\d,]+\.?\d*)\s*\|\s*[\$€£¥]?\s*([\d,]+\.?\d*)\s*\|\s*[\$€£¥]?\s*([\d,]+\.?\d*)\s*\|"
+    )
+    for m in table_row.finditer(text):
+        desc = m.group(1).strip()
+        # Skip header rows
+        if re.search(r"desc|product|item|qty|quantity|price|amount|total", desc, re.IGNORECASE):
+            continue
+        if re.search(r"^[-\s|]+$", desc):
+            continue
+        try:
+            items.append({
+                "description": desc,
+                "quantity": m.group(2).replace(",", ""),
+                "unit_price": m.group(3).replace(",", ""),
+                "amount": m.group(4).replace(",", ""),
+            })
+        except Exception:
+            continue
+
+    if items:
+        return items
+
+    # Strategy 2: Plain text rows — "Description   Qty   Price   Amount"
+    # Look for lines with 2+ numeric tokens that could be qty/price/amount
+    line_pattern = re.compile(
+        r"^(.+?)\s{2,}(\d+(?:\.\d+)?)\s{2,}[\$€£¥]?\s*(\d+(?:[,\.]\d+)?)\s{2,}[\$€£¥]?\s*(\d+(?:[,\.]\d+)?)$",
+        re.MULTILINE,
+    )
+    for m in line_pattern.finditer(text):
+        desc = m.group(1).strip()
+        if re.search(r"subtotal|total|tax|shipping|discount|amount due", desc, re.IGNORECASE):
+            continue
+        if len(desc) < 2:
+            continue
+        try:
+            items.append({
+                "description": desc,
+                "quantity": m.group(2).replace(",", ""),
+                "unit_price": m.group(3).replace(",", ""),
+                "amount": m.group(4).replace(",", ""),
+            })
+        except Exception:
+            continue
+
+    return items
+
+
+def _llm_extract_line_items(text: str) -> List[Dict[str, Any]]:
+    """
+    Ask Groq to extract line items as a JSON array when rule-based fails.
+    Each item: {description, quantity, unit_price, amount}.
+    """
+    import json
+    try:
+        from langchain_groq import ChatGroq
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        llm = ChatGroq(
+            api_key=os.getenv("GROQ_API_KEY"),
+            model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+            temperature=0,
+            model_kwargs={"response_format": {"type": "json_object"}},
+        )
+
+        system = (
+            "You are an invoice data extraction assistant. "
+            "Extract all line items from the invoice text. "
+            "Return a JSON object with a single key 'line_items' containing an array. "
+            "Each item must have: description (string), quantity (number or null), "
+            "unit_price (number or null), amount (number or null). "
+            "Do NOT include subtotal, tax, shipping, or total rows — only product/service lines. "
+            "If no line items exist, return {\"line_items\": []}."
+        )
+
+        human = f"Invoice text:\n\n{text[:3000]}\n\nExtract all line items."
+
+        response = llm.invoke(
+            [SystemMessage(content=system), HumanMessage(content=human)]
+        )
+
+        result = json.loads(response.content.strip())
+        items = result.get("line_items", [])
+        logger.info("LLM extracted %d line items", len(items))
+        return items if isinstance(items, list) else []
+
+    except Exception as exc:
+        logger.error("LLM line item extraction failed: %s", exc, exc_info=True)
+        return []
+
+
 # ── LLM fallback ──────────────────────────────────────────────────────────────
 
 def _llm_extract_invoice(text: str, missing_fields: List[str]) -> Dict[str, Any]:
@@ -308,6 +412,9 @@ def extract_invoice_node(state: IDPState) -> IDPState:
     # Merge both parser outputs so every extractor searches across the full
     # combined text. If docling misses something (e.g. a field in a complex
     # table) LlamaParse may have caught it, and vice versa.
+    import time as _time
+    _t0 = _time.perf_counter()
+
     parts = [t for t in [docling_text, llamaparse_text] if t]
     full_text = "\n\n---\n\n".join(parts)  # separator makes boundaries visible
 
@@ -367,6 +474,16 @@ def extract_invoice_node(state: IDPState) -> IDPState:
     confidence["reference_ids"] = conf
     method_log.append(f"reference_ids: {'rule_based' if conf > 0 else 'pending_llm'}")
 
+    # ── Line items ────────────────────────────────────────────────────────────
+    line_items = _extract_line_items_rule(full_text)
+    if not line_items:
+        logger.info("Rule-based line item extraction found nothing — trying LLM")
+        line_items = _llm_extract_line_items(full_text)
+    extracted["line_items"] = line_items
+    confidence["line_items"] = CONFIDENCE_RULE_MATCH if line_items else CONFIDENCE_LLM_FALLBACK
+    method_log.append(f"line_items: {'rule_based' if line_items else 'not_found'} ({len(line_items)} items)")
+    logger.info("Line items extracted: %d", len(line_items))
+
     # ── LLM fallback for low-confidence fields ────────────────────────────────
     missing_fields = [
         field for field, score in confidence.items()
@@ -405,9 +522,14 @@ def extract_invoice_node(state: IDPState) -> IDPState:
 
     extracted["extraction_method"] = method_summary
 
+    # Record extraction node timing
+    timings: dict = state.get("node_timings") or {}
+    timings["extract"] = round((_time.perf_counter() - _t0) * 1000, 2)
+
     return {
         **state,
         "extracted_fields": extracted,
         "confidence_scores": confidence,
         "extraction_method_log": method_log,
+        "node_timings": timings,
     }

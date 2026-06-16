@@ -1,5 +1,6 @@
 import datetime
 import logging
+import time as _time
 from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Optional
 
@@ -83,6 +84,22 @@ def _build_invoice(fields: Dict[str, Any], confidence: Dict[str, float], method:
     if not isinstance(ref_ids, list):
         ref_ids = [str(ref_ids)] if ref_ids else []
 
+    # ── line_items ────────────────────────────────────────────────────────────
+    raw_items = fields.get("line_items", []) or []
+    line_items = []
+    for raw in raw_items:
+        if not isinstance(raw, dict):
+            continue
+        try:
+            line_items.append(LineItem(
+                description=raw.get("description"),
+                quantity=_safe_decimal(raw.get("quantity")),
+                unit_price=_safe_decimal(raw.get("unit_price")),
+                amount=_safe_decimal(raw.get("amount")),
+            ))
+        except Exception:
+            continue
+
     # ── Build the model ───────────────────────────────────────────────────────
     try:
         response = InvoiceResponse(
@@ -93,7 +110,7 @@ def _build_invoice(fields: Dict[str, Any], confidence: Dict[str, float], method:
             date=date_val,
             due_date=due_date_val,
             totals=totals,
-            line_items=[],
+            line_items=line_items,
             reference_ids=ref_ids,
             confidence=confidence,
             extraction_method=method,
@@ -137,6 +154,8 @@ def _build_seaway(fields: Dict[str, Any], confidence: Dict[str, float], method: 
     totals = TransportTotals(
         freight_charges=_safe_decimal(fields.get("freight_charges")),
         total_charges=_safe_decimal(fields.get("total_charges")),
+        gross_weight=fields.get("gross_weight"),
+        measurement=fields.get("measurement"),
     )
 
     ref_ids = fields.get("reference_ids", [])
@@ -151,6 +170,7 @@ def _build_seaway(fields: Dict[str, Any], confidence: Dict[str, float], method: 
             notify_party=fields.get("notify_party"),
             vessel_name=fields.get("vessel_name"),
             voyage_number=fields.get("voyage_number"),
+            description_of_goods=fields.get("description_of_goods"),
             port_of_loading=fields.get("port_of_loading"),
             port_of_discharge=fields.get("port_of_discharge"),
             date_of_issue=date_val,
@@ -187,6 +207,8 @@ def _build_airway(fields: Dict[str, Any], confidence: Dict[str, float], method: 
     totals = TransportTotals(
         freight_charges=_safe_decimal(fields.get("freight_charges")),
         total_charges=_safe_decimal(fields.get("total_charges")),
+        gross_weight=fields.get("gross_weight"),
+        measurement=fields.get("measurement"),
     )
 
     ref_ids = fields.get("reference_ids", [])
@@ -202,6 +224,7 @@ def _build_airway(fields: Dict[str, Any], confidence: Dict[str, float], method: 
             airport_of_departure=fields.get("airport_of_departure"),
             airport_of_destination=fields.get("airport_of_destination"),
             flight_number=fields.get("flight_number"),
+            description_of_goods=fields.get("description_of_goods"),
             date_of_issue=date_val,
             totals=totals,
             reference_ids=ref_ids,
@@ -232,6 +255,8 @@ def validate_node(state: IDPState) -> IDPState:
       the final errors list.
     - Hallucinated or uncoercible values are never silently accepted.
     """
+    _t0 = _time.perf_counter()
+
     doc_type = state.get("document_type", "unknown")
     fields = state.get("extracted_fields") or {}
     confidence = state.get("confidence_scores") or {}
@@ -263,14 +288,55 @@ def validate_node(state: IDPState) -> IDPState:
     if prior_errors:
         response.errors = prior_errors + response.errors
 
+    # ── Human-in-the-loop flagging ────────────────────────────────────────────
+    # Key fields that matter most for downstream processing
+    KEY_FIELDS = {
+        "invoice":     ["issuer", "total", "date", "invoice_number"],
+        "seaway_bill": ["shipper", "consignee", "bl_number", "port_of_loading"],
+        "airway_bill": ["shipper", "consignee", "awb_number", "airport_of_departure"],
+    }
+    REVIEW_THRESHOLD = 0.7   # fields below this score trigger review flag
+
+    review_reasons: List[str] = []
+    key_fields = KEY_FIELDS.get(doc_type, [])
+
+    for field in key_fields:
+        score = confidence.get(field, 0.0)
+        if score < REVIEW_THRESHOLD:
+            review_reasons.append(
+                f"Low confidence on '{field}' ({score:.0%}) — value may be incorrect or missing"
+            )
+
+    # Also flag if there are extraction errors
+    if response.errors:
+        review_reasons.append(
+            f"{len(response.errors)} field(s) failed extraction and need manual verification"
+        )
+
+    if review_reasons:
+        response.requires_review = True
+        response.review_reasons = review_reasons
+        logger.info("Document flagged for human review: %s", review_reasons)
+
+    # ── Attach per-node timings to the response ───────────────────────────────
+    timings: Dict[str, float] = state.get("node_timings") or {}
+    timings["validate"] = round((_time.perf_counter() - _t0) * 1000, 2)
+    total_ms = round(sum(timings.values()), 2)
+
+    response.processing_time_ms = timings
+    response.total_time_ms = total_ms
+
     logger.info(
-        "Validation complete — %d field errors, method=%s",
+        "Validation complete — %d field errors, requires_review=%s, total=%.0fms | nodes=%s",
         len(response.errors),
-        method,
+        response.requires_review,
+        total_ms,
+        {k: f"{v:.0f}ms" for k, v in timings.items()},
     )
 
     return {
         **state,
         "final_response": response,
         "validation_errors": response.errors,
+        "node_timings": timings,
     }
