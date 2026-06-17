@@ -226,7 +226,7 @@ def _extract_line_items_rule(text: str) -> List[Dict[str, Any]]:
         r"\|\s*(.+?)\s*\|\s*([\d,]+\.?\d*)\s*\|\s*[\$€£¥]?\s*([\d,]+\.?\d*)\s*\|\s*[\$€£¥]?\s*([\d,]+\.?\d*)\s*\|"
     )
     for m in table_row.finditer(text):
-        desc = m.group(1).strip()
+        desc = re.sub(r"^\|?\s*", "", m.group(1)).strip()  # strip leading | artifact
         # Skip header rows
         if re.search(r"desc|product|item|qty|quantity|price|amount|total", desc, re.IGNORECASE):
             continue
@@ -243,7 +243,15 @@ def _extract_line_items_rule(text: str) -> List[Dict[str, Any]]:
             continue
 
     if items:
-        return items
+        # Deduplicate — merged parser outputs can produce identical rows
+        seen = set()
+        unique = []
+        for item in items:
+            key = (item["description"], item["quantity"], item["unit_price"], item["amount"])
+            if key not in seen:
+                seen.add(key)
+                unique.append(item)
+        return unique
 
     # Strategy 2: Plain text rows — "Description   Qty   Price   Amount"
     # Look for lines with 2+ numeric tokens that could be qty/price/amount
@@ -267,7 +275,15 @@ def _extract_line_items_rule(text: str) -> List[Dict[str, Any]]:
         except Exception:
             continue
 
-    return items
+    # Deduplicate strategy 2 results
+    seen = set()
+    unique = []
+    for item in items:
+        key = (item["description"], item["quantity"], item["unit_price"], item["amount"])
+        if key not in seen:
+            seen.add(key)
+            unique.append(item)
+    return unique
 
 
 def _llm_extract_line_items(text: str) -> List[Dict[str, Any]]:
@@ -325,9 +341,11 @@ def _llm_extract_invoice(text: str, missing_fields: List[str]) -> Dict[str, Any]
 
     # Only attempt fields we know about
     known_fields = {
-        "invoice_number", "issuer", "date", "due_date",
+        "invoice_number", "issuer", "date",
         "total", "subtotal", "tax", "currency", "recipient",
     }
+    # due_date is excluded — LLM tends to infer it from the invoice date when
+    # no explicit "Due Date" label exists. Rule-based extraction is strict enough.
     requested = [f for f in missing_fields if f in known_fields]
     if not requested:
         logger.info("LLM skip — no known fields in missing list: %s", missing_fields)
@@ -476,11 +494,16 @@ def extract_invoice_node(state: IDPState) -> IDPState:
         logger.info("Calling LLM for missing fields: %s", missing_fields)
         llm_results = _llm_extract_invoice(full_text, missing_fields)
 
-        # Sanitise LLM output: treat string "null"/"none"/"n/a" as None
+        # Sanitise LLM output
         _null_strings = {"null", "none", "n/a", "na", "undefined", ""}
+        _string_fields = {"invoice_number", "issuer", "date", "total", "subtotal", "tax", "currency", "recipient"}
         for field, value in llm_results.items():
+            # Treat string "null" / "none" / "n/a" as None
             if isinstance(value, str) and value.lower().strip() in _null_strings:
                 value = None
+            # If LLM returned a dict for a string field, extract the most useful key
+            if isinstance(value, dict) and field in _string_fields:
+                value = value.get("name") or value.get("value") or value.get("text") or str(next(iter(value.values()), None))
             if value is not None and (extracted.get(field) is None):
                 extracted[field] = value
                 confidence[field] = 0.85  # LLM result — high but not certain
